@@ -1,0 +1,22 @@
+trigger accountCancel on Return__c (after update, after insert) {  
+    Set<String> whatIDs = new Set<String>();
+    List<Account> acct = new List<Account>();
+    List<Opportunity> oppt = new List<Opportunity>(); 
+    for(Return__c r : Trigger.new){
+        if(r.Cancelled__c == true){
+            whatIDs.add(r.accountId__c); 
+            acct = [SELECT Id, Type FROM Account WHERE Id =: whatIDs]; 
+            oppt = [SELECT Salesforce_ID__c, StageName FROM Opportunity WHERE Salesforce_ID__c =: whatIDs]; 
+            for(Account a : acct){
+                a.Type = 'Former Customer'; 
+            }
+            for(Opportunity o : oppt){
+                if(o.StageName == 'Closed Won'){
+                    o.Cancelled__c = true; 
+                }
+            }
+        }
+    }
+    update acct; 
+    update oppt; 
+}
